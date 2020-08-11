@@ -237,7 +237,7 @@ func TestError(t *testing.T) {
 }
 
 func TestProcess(t *testing.T) {
-	dataA := generateDataBuffer(1, 3030, Data{Port: 3030, Service: typeUnknown, Status: stOpen})
+	dataA := generateDataBuffer(3000, 3030, Data{Port: 3030, Service: typeUnknown, Status: stOpen})
 	type args struct {
 		scanner *Scanner
 	}
@@ -246,7 +246,7 @@ func TestProcess(t *testing.T) {
 		args args
 		want []Data
 	}{
-		{"processA", args{scanner: NewScanner(1, 3030, 3, "localhost", PtTCP, 100)}, dataA},
+		{"processA", args{scanner: NewScanner(3000, 3030, 3, "localhost", PtTCP, 100)}, dataA},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
