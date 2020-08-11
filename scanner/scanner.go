@@ -5,6 +5,7 @@ import (
 	"net"
 	"sort"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -44,9 +45,34 @@ const (
 	ptMongoDB                = "mongodb <http://www.mongodb.org/>"
 	ptMongoDBWebAdmin        = "mongodb web admin <http://www.mongodb.org/>"
 	typeUnknown              = "<unknown>"
-
-	errNetworkAddress = errMessage("Can't create a network address")
+	// Network errors
+	errUnknownHost       = errMessage("Unknown host")
+	errConnectionRefused = errMessage("Connection refused")
+	errConnectionTimeout = errMessage("Connection timeout")
+	errDial              = errMessage("dial")
+	errRead              = errMessage("read")
+	errUnknownError      = errMessage("Unknown error")
+	errDNS               = errMessage("Dns error")
 )
+
+func mapNetworkError(err error) error {
+	if netError, ok := err.(net.Error); ok && netError.Timeout() {
+		return errConnectionTimeout
+	}
+
+	switch e := err.(type) {
+	case *net.OpError:
+		if e.Op == errDial.Error() {
+			return errUnknownHost
+		}
+	// match for linux
+	case syscall.Errno:
+		if e == syscall.ECONNREFUSED {
+			return errConnectionRefused
+		}
+	}
+	return errUnknownError
+}
 
 var knownPorts = map[int]string{
 	21:    ptFTP,
@@ -173,7 +199,7 @@ func (s *Scanner) scanPort(buffer <-chan Data) <-chan Data {
 			host := fmt.Sprintf("%s:%d", s.ip, dataItem.Port)
 			conn, err := s.openConn(host)
 			if err != nil {
-				dataItem.Status = stClose
+				dataItem.Status = mapNetworkError(err).Error()
 			} else {
 				dataItem.Status = stOpen
 				dataItem.Service = s.predictPort(dataItem.Port)

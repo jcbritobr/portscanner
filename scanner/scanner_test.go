@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 const (
@@ -62,16 +63,6 @@ func checkErrorPanic(err error) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func generateDataBuffer(start, end int, last Data) []Data {
-	buffer := []Data{}
-	for i := start; i < end; i++ {
-		buffer = append(buffer, Data{Port: i, Status: stClose})
-	}
-
-	buffer = append(buffer, last)
-	return buffer
 }
 
 func init() {
@@ -220,16 +211,16 @@ func TestError(t *testing.T) {
 		name string
 		want error
 	}{
-		{"errorA", errNetworkAddress},
+		{"errorA", errUnknownHost},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
 			f := func() error {
-				return fmt.Errorf("Bad network address %w", errNetworkAddress)
+				return fmt.Errorf("Bad network address %w", errUnknownHost)
 			}
 
 			err := f()
-			if !errors.Is(err, errNetworkAddress) {
+			if !errors.Is(err, errUnknownHost) {
 				t.Errorf("error() = %v want %v", err, tC.want)
 			}
 		})
@@ -237,7 +228,7 @@ func TestError(t *testing.T) {
 }
 
 func TestProcess(t *testing.T) {
-	dataA := generateDataBuffer(1, 3030, Data{Port: 3030, Service: typeUnknown, Status: stOpen})
+	dataA := []Data{{Port: 3029, Status: errConnectionTimeout.Error()}, {Port: 3030, Status: stOpen, Service: typeUnknown}}
 	type args struct {
 		scanner *Scanner
 	}
@@ -246,7 +237,7 @@ func TestProcess(t *testing.T) {
 		args args
 		want []Data
 	}{
-		{"processA", args{scanner: NewScanner(1, 3030, 3, "localhost", PtTCP, 100)}, dataA},
+		{"processA", args{scanner: NewScanner(3029, 3030, 2, "localhost", PtTCP, 100)}, dataA},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
@@ -318,6 +309,43 @@ func TestSortDataSlice(t *testing.T) {
 
 			if !reflect.DeepEqual(tC.args.slice, tC.want) {
 				t.Errorf("sortDataSlice() = %v want %v", tC.args.slice, tC.want)
+			}
+		})
+	}
+}
+
+func TestMapNetworkError(t *testing.T) {
+	type args struct {
+		host     string
+		protocol string
+		timeout  time.Duration
+	}
+	testCases := []struct {
+		name string
+		args args
+		want error
+	}{
+		{"mapNetworkError B", args{host: ":3", protocol: PtTCP, timeout: time.Millisecond * 1}, errConnectionTimeout},
+		{"mapNetworkError C", args{host: ":3", protocol: PtTCP, timeout: time.Millisecond * 60000}, errUnknownHost},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.name, func(t *testing.T) {
+			addr, err := net.ResolveTCPAddr(tC.args.protocol, tC.args.host)
+			if err != nil {
+				got := mapNetworkError(err)
+				if !reflect.DeepEqual(got.Error(), tC.want.Error()) {
+					t.Errorf("mapNetworkError() = %v want %v", got, tC.want)
+					return
+				}
+			}
+
+			_, err = net.DialTimeout(tC.args.protocol, addr.String(), tC.args.timeout)
+			if err != nil {
+				got := mapNetworkError(err)
+				if !reflect.DeepEqual(got.Error(), tC.want.Error()) {
+					t.Errorf("mapNetworkError() = %v want %v", got, tC.want)
+					return
+				}
 			}
 		})
 	}
