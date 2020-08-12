@@ -4,8 +4,13 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"text/tabwriter"
 
 	"github.com/jcbritobr/portscanner/scanner"
+)
+
+const (
+	strMarker = "."
 )
 
 func main() {
@@ -25,8 +30,23 @@ func main() {
 	s := scanner.NewScanner(*start, *end, *workers, *host, *protocol, uint16(*timeout))
 	c := s.Process()
 
+	buffer := []scanner.Data{}
+	fmt.Println("Generating report")
 	for data := range c {
-		fmt.Fprintf(os.Stdout, "port: %v	service: %s	status: %s\n", data.Port, data.Service, data.Status)
+		fmt.Print(strMarker)
+		buffer = append(buffer, data)
 	}
 
+	fmt.Printf("\n\n")
+
+	scanner.SortDataSlice(buffer)
+
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, 0, 10, 3, ' ', 0)
+	fmt.Fprintln(w, "Port\tService\tStatus\t")
+	fmt.Fprintln(w, "------\t--------\t------\t")
+	for _, data := range buffer {
+		fmt.Fprintln(w, fmt.Sprintf("%d\t%s\t%s\t", data.Port, data.Service, data.Status))
+	}
+	w.Flush()
 }
