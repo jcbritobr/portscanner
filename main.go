@@ -14,12 +14,12 @@ const (
 )
 
 func main() {
-	start := flag.Int("start", 1, "-start <int value> is the start of port range")
-	end := flag.Int("end", 80, "-end <int value> is the end of port range")
-	timeout := flag.Int("t", 100, "-t <int value> is the value of connection timeout used")
-	workers := flag.Int("workers", 1, "-workers <string value> is the number of concurrent process")
-	host := flag.String("host", "127.0.0.1", "-host <string value> is the target host to be scaned")
-	protocol := flag.String("proto", "tcp", "-proto <string value> is the protocol used - tcp or udp")
+	start := flag.Int("start", 1, "-start is the start of port range")
+	end := flag.Int("end", 80, "-end is the end of port range")
+	timeout := flag.Int("t", 100, "-t is the value of connection timeout used")
+	workers := flag.Int("workers", 1, "-workers is the number of concurrent process")
+	host := flag.String("host", "127.0.0.1", "-host is the target host to be scaned")
+	protocol := flag.String("proto", "tcp", "-proto is the protocol used - tcp or udp")
 
 	flag.Parse()
 

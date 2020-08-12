@@ -13,17 +13,17 @@ $ go build -v
 $ ./portscanner -h
 Usage of ./portscanner:
   -end int
-        -end <int value> is the end of port range (default 80)
+        -end is the end of port range (default 80)
   -host string
-        -host <string value> is the target host to be scaned (default "127.0.0.1")
+        -host is the target host to be scaned (default "127.0.0.1")
   -proto string
-        -proto <string value> is the protocol used - tcp or udp (default "tcp")
+        -proto is the protocol used - tcp or udp (default "tcp")
   -start int
-        -start <int value> is the start of port range (default 1)
+        -start is the start of port range (default 1)
   -t int
-        -t <int value> is the value of connection timeout used (default 100)
+        -t is the value of connection timeout used (default 100)
   -workers int
-        -workers <string value> is the number of concurrent process (default 1)
+        -workers is the number of concurrent process (default 1)
 ```
 
 ```sh
