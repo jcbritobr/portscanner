@@ -8,6 +8,19 @@ This is a simple **port scanner** that is able to map a large range of protocols
 $ go build -v
 ```
 
+* **Test** \
+The tests are using patterns like **golden files**, **fixtures** and **test helpers**. The golden files have inside it all output scenarios.
+If tests failure happens in diffrent machines(because of port setup), just update the golden files.
+
+```sh
+$ go test ./... -cover -update
+```
+then test port-scanner again
+
+```sh
+$ go test ./... -cover
+```
+
 * **Usage**
 ```sh
 $ ./portscanner -h
