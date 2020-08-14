@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 	"testing"
 )
 
@@ -24,60 +23,24 @@ var (
 	update = flag.Bool("update", false, "update golden files")
 )
 
-type server interface {
-	run() error
-	close() error
-}
-
-type tcpServer struct {
-	addr   string
-	server net.Listener
-}
-
-func newServer(protocol, addr string) (server, error) {
-	switch strings.ToLower(protocol) {
-	case PtTCP:
-		return &tcpServer{addr: addr}, nil
-	case PtUDP:
-	}
-
-	return nil, fmt.Errorf("Invalid protocol given")
-}
-
-func (t *tcpServer) close() error {
-	return t.server.Close()
-}
-
-func (t *tcpServer) run() error {
-	server, err := net.Listen("tcp", t.addr)
-	t.server = server
-	if err != nil {
-		return err
-	}
-
-	for {
-		conn, err := t.server.Accept()
-		if err != nil {
-			return fmt.Errorf("cant accept the connection %v", err)
-		}
-		go t.handleClient(conn)
-	}
-}
-
-func (t *tcpServer) handleClient(conn net.Conn) {
-	defer conn.Close()
-}
-
-func checkErrorPanic(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
 func checkErrorFatalf(t *testing.T, message string, err error) {
 	if err != nil {
 		t.Fatalf("%s err %v\n", message, err)
 	}
+}
+
+func spawnServerHelper(t *testing.T, host, protocol string) net.Conn {
+	t.Helper()
+	listener, err := net.Listen(protocol, host)
+	checkErrorFatalf(t, "cant create listener", err)
+
+	var server net.Conn
+	go func() {
+		defer listener.Close()
+		server, err = listener.Accept()
+	}()
+
+	return server
 }
 
 func openGoldenFileHelper(t *testing.T, filename, source string, update bool) string {
@@ -87,6 +50,9 @@ func openGoldenFileHelper(t *testing.T, filename, source string, update bool) st
 	defer file.Close()
 	checkErrorFatalf(t, fmt.Sprintf("cant open golden file %s", path), err)
 	if update {
+		err = os.Truncate(path, 0)
+		checkErrorFatalf(t, fmt.Sprintf("cant truncate file %s", path), err)
+
 		_, err = file.WriteString(source)
 		checkErrorFatalf(t, fmt.Sprintf("cant write golden file %s", path), err)
 		return source
@@ -125,12 +91,6 @@ func generateDataBuffer(start, end int, last Data) []Data {
 }
 
 func TestMain(m *testing.M) {
-	srv, err := newServer(PtTCP, srvAddr)
-	checkErrorPanic(err)
-	go func() {
-		srv.run()
-	}()
-
 	os.Exit(m.Run())
 }
 
@@ -197,6 +157,7 @@ func TestGenerate(t *testing.T) {
 }
 
 func TestScanPort(t *testing.T) {
+	_ = spawnServerHelper(t, ":3015", PtTCP)
 	type args struct {
 		scan *Scanner
 	}
@@ -324,6 +285,7 @@ func TestProcess(t *testing.T) {
 }
 
 func TestMerge(t *testing.T) {
+	_ = spawnServerHelper(t, ":2001", PtTCP)
 	type args struct {
 		scanner *Scanner
 	}
