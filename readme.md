@@ -1,5 +1,5 @@
 ## A Golang Port Scanner from scratch, using TDD
-This is a simple **port scanner** that is able to map a large range of protocols. Using good design patterns for concurrency, like **fan-in/fan-out**, we acquire good performance in scanning process. All pakcages are covered by **TDD**, even when using tcp protocol for tests.
+This is a simple **port scanner** that is able to map a large range of protocols. Using good design patterns for concurrency, like **fan-in/fan-out**, fixtures, goldenfiles and test helpers for tests, we create nice unit tests and acquire good performance in scanning process. All pakcages are covered by **TDD**, even when using tcp protocol for tests.
 
 * **UDP isn't implemented yet**
 
