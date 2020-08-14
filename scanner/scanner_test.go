@@ -1,17 +1,27 @@
 package scanner
 
 import (
+	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
+	"io/ioutil"
 	"net"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 )
 
 const (
-	tstPort = "3030"
-	srvAddr = ":3030"
+	tstPort         = "3030"
+	srvAddr         = ":3030"
+	fsFixtureFolder = "testdata"
+)
+
+var (
+	update = flag.Bool("update", false, "update golden files")
 )
 
 type server interface {
@@ -64,6 +74,46 @@ func checkErrorPanic(err error) {
 	}
 }
 
+func checkErrorFatalf(t *testing.T, message string, err error) {
+	if err != nil {
+		t.Fatalf("%s err %v\n", message, err)
+	}
+}
+
+func openGoldenFileHelper(t *testing.T, filename, source string, update bool) string {
+	t.Helper()
+	path := filepath.Join(fsFixtureFolder, filename)
+	file, err := os.OpenFile(path, os.O_RDWR, 0644)
+	defer file.Close()
+	checkErrorFatalf(t, fmt.Sprintf("cant open golden file %s", path), err)
+	if update {
+		_, err = file.WriteString(source)
+		checkErrorFatalf(t, fmt.Sprintf("cant write golden file %s", path), err)
+		return source
+	}
+
+	content, err := ioutil.ReadAll(file)
+	checkErrorFatalf(t, fmt.Sprintf("cant read golden file %s", path), err)
+	return string(content)
+}
+
+func openDataFixtureHelper(t *testing.T, filename string) []Data {
+	t.Helper()
+	path := filepath.Join(fsFixtureFolder, filename)
+	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
+	defer file.Close()
+	checkErrorFatalf(t, fmt.Sprintf("cant open fixture %s", path), err)
+
+	content, err := ioutil.ReadAll(file)
+	checkErrorFatalf(t, fmt.Sprintf("cant read file %s", path), err)
+
+	var buffer []Data
+	err = json.Unmarshal(content, &buffer)
+	checkErrorFatalf(t, fmt.Sprintf("cant unmarshal json file %s", path), err)
+
+	return buffer
+}
+
 func generateDataBuffer(start, end int, last Data) []Data {
 	buffer := []Data{}
 	for i := start; i < end; i++ {
@@ -74,12 +124,14 @@ func generateDataBuffer(start, end int, last Data) []Data {
 	return buffer
 }
 
-func init() {
+func TestMain(m *testing.M) {
 	srv, err := newServer(PtTCP, srvAddr)
 	checkErrorPanic(err)
 	go func() {
 		srv.run()
 	}()
+
+	os.Exit(m.Run())
 }
 
 //------------------------------------------------ Start test functions ------------------------------------------------//
@@ -98,7 +150,10 @@ func TestNewScanner(t *testing.T) {
 		args args
 		want *Scanner
 	}{
-		{"NewScanner A", args{start: 0, end: 100, workers: 1, ip: "192.168.1.1", protocol: PtTCP}, &Scanner{start: 0, end: 100, workers: 1, ip: "192.168.1.1", protocol: PtTCP}},
+		{
+			"NewScanner A", args{start: 0, end: 100, workers: 1, ip: "192.168.1.1", protocol: PtTCP},
+			&Scanner{start: 0, end: 100, workers: 1, ip: "192.168.1.1", protocol: PtTCP},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -116,11 +171,11 @@ func TestGenerate(t *testing.T) {
 	testCases := []struct {
 		name string
 		args args
-		want []Data
+		want string
 	}{
-		{"generate A", args{NewScanner(1, 3, 1, "192.168.1.1", PtTCP, 100)}, []Data{{Port: 1}, {Port: 2}, {Port: 3}}},
-		{"generate B", args{NewScanner(1, 1, 1, "192.168.1.10", PtTCP, 100)}, []Data{{Port: 1}}},
-		{"generate B", args{NewScanner(2, 3, 1, "192.168.1.10", PtTCP, 100)}, []Data{{Port: 2}, {Port: 3}}},
+		{"generate A", args{NewScanner(1, 3, 1, "192.168.1.1", PtTCP, 100)}, "generatea.golden"},
+		{"generate B", args{NewScanner(1, 1, 1, "192.168.1.10", PtTCP, 100)}, "generateb.golden"},
+		{"generate C", args{NewScanner(2, 3, 1, "192.168.1.10", PtTCP, 100)}, "generatec.golden"},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
@@ -131,8 +186,11 @@ func TestGenerate(t *testing.T) {
 				got = append(got, d)
 			}
 
-			if !reflect.DeepEqual(got, tC.want) {
-				t.Errorf("generate() = %v, want %v", got, tC.want)
+			str := fmt.Sprintf("%v", got)
+			want := openGoldenFileHelper(t, tC.want, str, *update)
+
+			if !reflect.DeepEqual(str, want) {
+				t.Errorf("generate() = %v, want %v", got, want)
 			}
 		})
 	}
@@ -145,9 +203,9 @@ func TestScanPort(t *testing.T) {
 	testCases := []struct {
 		name string
 		args args
-		want Data
+		want string
 	}{
-		{"scanPort A", args{NewScanner(3029, 3030, 1, "localhost", PtTCP, 100)}, Data{Port: 3030, Service: typeUnknown, Status: stOpen}},
+		{"scanPort A", args{NewScanner(3000, 3030, 2, "localhost", PtTCP, 100)}, "scanporta.golden"},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
@@ -157,13 +215,12 @@ func TestScanPort(t *testing.T) {
 				result = append(result, dataResult)
 			}
 
-			for _, dataResult := range result {
-				if dataResult.Port == tC.want.Port && dataResult.Service == tC.want.Service && dataResult.Status == tC.want.Status {
-					return
-				}
-			}
+			got := fmt.Sprintf("%v", result)
+			want := openGoldenFileHelper(t, tC.want, got, *update)
 
-			t.Errorf("scanPort() = not found want %v", tC.want)
+			if !reflect.DeepEqual(got, want) {
+				t.Errorf("scanPort() = %s want %v", got, want)
+			}
 		})
 	}
 }
@@ -237,16 +294,16 @@ func TestError(t *testing.T) {
 }
 
 func TestProcess(t *testing.T) {
-	dataA := generateDataBuffer(3000, 3030, Data{Port: 3030, Service: typeUnknown, Status: stOpen})
+
 	type args struct {
 		scanner *Scanner
 	}
 	testCases := []struct {
 		name string
 		args args
-		want []Data
+		want string
 	}{
-		{"processA", args{scanner: NewScanner(3000, 3030, 3, "localhost", PtTCP, 100)}, dataA},
+		{"processA", args{scanner: NewScanner(3000, 3030, 3, "localhost", PtTCP, 100)}, "processa.golden"},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
@@ -256,9 +313,11 @@ func TestProcess(t *testing.T) {
 				result = append(result, data)
 			}
 			SortDataSlice(result)
+			got := fmt.Sprintf("%v", result)
+			want := openGoldenFileHelper(t, tC.want, got, *update)
 
-			if !reflect.DeepEqual(result, tC.want) {
-				t.Errorf("Process() = %v want %v", result, tC.want)
+			if !reflect.DeepEqual(got, want) {
+				t.Errorf("Process() = %v want %v", got, want)
 			}
 		})
 	}
@@ -271,9 +330,10 @@ func TestMerge(t *testing.T) {
 	testCases := []struct {
 		name string
 		args args
-		want []Data
+		want string
 	}{
-		{"mergeA", args{scanner: NewScanner(3030, 3030, 1, "localhost", PtTCP, 100)}, []Data{{Port: 3030, Service: typeUnknown, Status: stOpen}}},
+		{"mergeA", args{scanner: NewScanner(3030, 3030, 1, "localhost", PtTCP, 100)}, "mergea.golden"},
+		{"mergeB", args{scanner: NewScanner(2000, 3030, 5, "localhost", PtTCP, 100)}, "mergeb.golden"},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
@@ -292,9 +352,11 @@ func TestMerge(t *testing.T) {
 			}
 
 			SortDataSlice(result)
+			got := fmt.Sprintf("%v", result)
+			want := openGoldenFileHelper(t, tC.want, got, *update)
 
-			if !reflect.DeepEqual(result, tC.want) {
-				t.Errorf("merge() = %v want %v", result, tC.want)
+			if !reflect.DeepEqual(got, want) {
+				t.Errorf("merge() = %v want %v", got, want)
 			}
 		})
 	}
@@ -307,17 +369,19 @@ func TestSortDataSlice(t *testing.T) {
 	testCases := []struct {
 		name string
 		args args
-		want []Data
+		want string
 	}{
-		{"sortDataSliceA", args{[]Data{{Port: 10, Service: "", Status: stClose}, {Port: 6, Service: "", Status: stClose}}}, []Data{{Port: 6, Service: "", Status: stClose}, {Port: 10, Service: "", Status: stClose}}},
+		{"sortDataSliceA", args{openDataFixtureHelper(t, "fixsortdataslice.json")}, "sortdataslicea.golden"},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
 
 			SortDataSlice(tC.args.slice)
+			got := fmt.Sprintf("%v", tC.args.slice)
+			want := openGoldenFileHelper(t, tC.want, got, *update)
 
-			if !reflect.DeepEqual(tC.args.slice, tC.want) {
-				t.Errorf("sortDataSlice() = %v want %v", tC.args.slice, tC.want)
+			if !reflect.DeepEqual(got, want) {
+				t.Errorf("sortDataSlice() = %v want %v", got, want)
 			}
 		})
 	}

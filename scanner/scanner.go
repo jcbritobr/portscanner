@@ -88,9 +88,9 @@ func (e errMessage) Error() string {
 
 // Data holds the port information retrieved from the server
 type Data struct {
-	Port    int
-	Status  string
-	Service string
+	Port    int    `json:"port"`
+	Status  string `json:"status"`
+	Service string `json:"service"`
 }
 
 // Scanner implements a concurrent port scanner

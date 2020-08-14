@@ -1,0 +1,12 @@
+[
+    {
+        "port": 10,
+        "service": "",
+        "status": "closed"
+    },
+    {
+        "port": 6,
+        "service": "",
+        "status": "closed"
+    }
+]
