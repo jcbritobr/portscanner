@@ -44,7 +44,7 @@ func main() {
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 0, 10, 3, ' ', 0)
 	fmt.Fprintln(w, "Port\tProtocol\tStatus\t")
-	fmt.Fprintln(w, "------\t--------_\t------\t")
+	fmt.Fprintln(w, "------\t--------\t------\t")
 	for _, data := range buffer {
 		fmt.Fprintln(w, fmt.Sprintf("%d\t%s\t%s\t", data.Port, data.Protocol, data.Status))
 	}
