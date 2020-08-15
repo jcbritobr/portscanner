@@ -78,16 +78,6 @@ func openDataFixtureHelper(t *testing.T, filename string) []Data {
 	return buffer
 }
 
-func generateDataBuffer(start, end int, last Data) []Data {
-	buffer := []Data{}
-	for i := start; i < end; i++ {
-		buffer = append(buffer, Data{Port: i, Status: stClose})
-	}
-
-	buffer = append(buffer, last)
-	return buffer
-}
-
 func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
