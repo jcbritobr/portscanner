@@ -29,18 +29,16 @@ func checkErrorFatalf(t *testing.T, message string, err error) {
 	}
 }
 
-func spawnServerHelper(t *testing.T, host, protocol string) net.Conn {
+func spawnServerHelper(t *testing.T, host, protocol string) {
 	t.Helper()
 	listener, err := net.Listen(protocol, host)
 	checkErrorFatalf(t, "cant create listener", err)
 
-	var server net.Conn
 	go func() {
 		defer listener.Close()
-		server, err = listener.Accept()
+		_, err = listener.Accept()
+		checkErrorFatalf(t, "socket failure", err)
 	}()
-
-	return server
 }
 
 func openGoldenFileHelper(t *testing.T, filename, source string, update bool) string {
@@ -157,7 +155,7 @@ func TestGenerate(t *testing.T) {
 }
 
 func TestScanPort(t *testing.T) {
-	_ = spawnServerHelper(t, ":3015", PtTCP)
+	spawnServerHelper(t, ":3015", PtTCP)
 	type args struct {
 		scan *Scanner
 	}
@@ -285,7 +283,7 @@ func TestProcess(t *testing.T) {
 }
 
 func TestMerge(t *testing.T) {
-	_ = spawnServerHelper(t, ":2001", PtTCP)
+	spawnServerHelper(t, ":2001", PtTCP)
 	type args struct {
 		scanner *Scanner
 	}
