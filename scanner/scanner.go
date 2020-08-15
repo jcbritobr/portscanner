@@ -12,9 +12,7 @@ const (
 	stClose = "closed"
 	stOpen  = "open"
 	//PtTCP is a ptrotocol used by scannner object and may be exported
-	PtTCP = "tcp"
-	//PtUDP is a ptrotocol used by scannner object and may be exported
-	PtUDP                    = "udp"
+	PtTCP                    = "tcp"
 	ptFTP                    = "ftp"
 	ptSSH                    = "ssh"
 	ptTelnet                 = "telnet"
@@ -95,13 +93,12 @@ type Data struct {
 
 // Scanner implements a concurrent port scanner
 type Scanner struct {
-	data     []Data
-	ip       string
-	protocol string
-	workers  int
-	start    int
-	end      int
-	timeout  uint16
+	data    []Data
+	ip      string
+	workers int
+	start   int
+	end     int
+	timeout uint16
 }
 
 // SortDataSlice is used to sort slice results
@@ -115,8 +112,8 @@ func SortDataSlice(slice []Data) {
 // start is the port begining scan value that scanner will starts scan all ports,
 // and end is the limit for port scanner. The workers param means the number
 // of goroutines, and ip, the address for scan
-func NewScanner(start, end, workers int, ip, protocol string, timeout uint16) *Scanner {
-	return &Scanner{start: start, end: end, workers: workers, ip: ip, protocol: protocol, timeout: timeout}
+func NewScanner(start, end, workers int, ip string, timeout uint16) *Scanner {
+	return &Scanner{start: start, end: end, workers: workers, ip: ip, timeout: timeout}
 }
 
 func (s *Scanner) openConn(host string) (net.Conn, error) {
