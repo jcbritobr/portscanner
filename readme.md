@@ -54,9 +54,9 @@ Generating report
 ................................................................................
 
 Port     Protocol    Status
-------   ---------   ------
-1                   closed
-2                   closed
+------   --------    ------
+1                    closed
+2                    closed
 ...
-80       http       open
+80       http        open
 ```
