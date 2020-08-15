@@ -99,13 +99,13 @@ func TestNewScanner(t *testing.T) {
 		want *Scanner
 	}{
 		{
-			"NewScanner A", args{start: 0, end: 100, workers: 1, ip: "192.168.1.1", protocol: PtTCP},
-			&Scanner{start: 0, end: 100, workers: 1, ip: "192.168.1.1", protocol: PtTCP},
+			"NewScanner A", args{start: 0, end: 100, workers: 1, ip: "192.168.1.1"},
+			&Scanner{start: 0, end: 100, workers: 1, ip: "192.168.1.1"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewScanner(tt.args.start, tt.args.end, tt.args.workers, tt.args.ip, tt.args.protocol, tt.args.timeout); !reflect.DeepEqual(got, tt.want) {
+			if got := NewScanner(tt.args.start, tt.args.end, tt.args.workers, tt.args.ip, tt.args.timeout); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewScanner() = %v, want %v", got, tt.want)
 			}
 		})
@@ -121,9 +121,9 @@ func TestGenerate(t *testing.T) {
 		args args
 		want string
 	}{
-		{"generate A", args{NewScanner(1, 3, 1, "192.168.1.1", PtTCP, 100)}, "generatea.golden"},
-		{"generate B", args{NewScanner(1, 1, 1, "192.168.1.10", PtTCP, 100)}, "generateb.golden"},
-		{"generate C", args{NewScanner(2, 3, 1, "192.168.1.10", PtTCP, 100)}, "generatec.golden"},
+		{"generate A", args{NewScanner(1, 3, 1, "192.168.1.1", 100)}, "generatea.golden"},
+		{"generate B", args{NewScanner(1, 1, 1, "192.168.1.10", 100)}, "generateb.golden"},
+		{"generate C", args{NewScanner(2, 3, 1, "192.168.1.10", 100)}, "generatec.golden"},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
@@ -154,7 +154,7 @@ func TestScanPort(t *testing.T) {
 		args args
 		want string
 	}{
-		{"scanPort A", args{NewScanner(3000, 3030, 2, "localhost", PtTCP, 100)}, "scanporta.golden"},
+		{"scanPort A", args{NewScanner(3000, 3030, 2, "localhost", 100)}, "scanporta.golden"},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
@@ -189,7 +189,7 @@ func TestOpenConn(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
-			scan := NewScanner(0, 0, 0, "", PtTCP, 100)
+			scan := NewScanner(0, 0, 0, "", 100)
 			_, err := scan.openConn(tC.args.addr)
 			if err == nil && !tC.want {
 				t.Errorf("openConn() = %v want %v", err, tC.want)
@@ -252,7 +252,7 @@ func TestProcess(t *testing.T) {
 		args args
 		want string
 	}{
-		{"processA", args{scanner: NewScanner(3000, 3030, 3, "localhost", PtTCP, 100)}, "processa.golden"},
+		{"processA", args{scanner: NewScanner(3000, 3030, 3, "localhost", 100)}, "processa.golden"},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
@@ -282,8 +282,8 @@ func TestMerge(t *testing.T) {
 		args args
 		want string
 	}{
-		{"mergeA", args{scanner: NewScanner(3030, 3030, 1, "localhost", PtTCP, 100)}, "mergea.golden"},
-		{"mergeB", args{scanner: NewScanner(2000, 3030, 5, "localhost", PtTCP, 100)}, "mergeb.golden"},
+		{"mergeA", args{scanner: NewScanner(3030, 3030, 1, "localhost", 100)}, "mergea.golden"},
+		{"mergeB", args{scanner: NewScanner(2000, 3030, 5, "localhost", 100)}, "mergeb.golden"},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {

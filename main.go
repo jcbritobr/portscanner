@@ -19,15 +19,10 @@ func main() {
 	timeout := flag.Int("t", 100, "-t is the value of connection timeout used")
 	workers := flag.Int("workers", 1, "-workers is the number of concurrent process")
 	host := flag.String("host", "127.0.0.1", "-host is the target host to be scaned")
-	protocol := flag.String("proto", "tcp", "-proto is the protocol used - tcp or udp")
 
 	flag.Parse()
 
-	if scanner.PtTCP != *protocol && scanner.PtUDP != *protocol {
-		fmt.Fprintf(os.Stderr, "Wrong protocol used %s. Use tcp or udp", *protocol)
-	}
-
-	s := scanner.NewScanner(*start, *end, *workers, *host, *protocol, uint16(*timeout))
+	s := scanner.NewScanner(*start, *end, *workers, *host, uint16(*timeout))
 	c := s.Process()
 
 	buffer := []scanner.Data{}
