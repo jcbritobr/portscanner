@@ -53,8 +53,8 @@ $ ./portscanner -host www.google.com -t 100 -end 80
 Generating report
 ................................................................................
 
-Port     Service    Status
-------   --------   ------
+Port     Protocol    Status
+------   ---------   ------
 1                   closed
 2                   closed
 ...

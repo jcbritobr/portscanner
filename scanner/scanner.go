@@ -88,9 +88,9 @@ func (e errMessage) Error() string {
 
 // Data holds the port information retrieved from the server
 type Data struct {
-	Port    int    `json:"port"`
-	Status  string `json:"status"`
-	Service string `json:"service"`
+	Port     int    `json:"port"`
+	Status   string `json:"status"`
+	Protocol string `json:"protocol"`
 }
 
 // Scanner implements a concurrent port scanner
@@ -176,7 +176,7 @@ func (s *Scanner) scanPort(buffer <-chan Data) <-chan Data {
 				dataItem.Status = stClose
 			} else {
 				dataItem.Status = stOpen
-				dataItem.Service = s.predictPort(dataItem.Port)
+				dataItem.Protocol = s.predictPort(dataItem.Port)
 				conn.Close()
 			}
 			c <- dataItem
