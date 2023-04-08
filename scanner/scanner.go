@@ -152,7 +152,7 @@ func (s *Scanner) predictPort(port int) string {
 }
 
 func (s *Scanner) generate() <-chan Data {
-	c := make(chan Data)
+	c := make(chan Data, s.workers)
 	go func() {
 		for i := s.start; i <= s.end; i++ {
 			d := Data{Port: i}
@@ -164,7 +164,7 @@ func (s *Scanner) generate() <-chan Data {
 }
 
 func (s *Scanner) scanPort(buffer <-chan Data) <-chan Data {
-	c := make(chan Data)
+	c := make(chan Data, s.workers)
 	go func() {
 		for dataItem := range buffer {
 			host := fmt.Sprintf("%s:%d", s.ip, dataItem.Port)
@@ -186,7 +186,7 @@ func (s *Scanner) scanPort(buffer <-chan Data) <-chan Data {
 
 func (s *Scanner) merge(buffer ...<-chan Data) <-chan Data {
 	var wg sync.WaitGroup
-	out := make(chan Data)
+	out := make(chan Data, s.workers)
 	output := func(c <-chan Data) {
 		for n := range c {
 			out <- n
