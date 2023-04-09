@@ -1,6 +1,10 @@
 ## A Golang Port Scanner from scratch, using TDD
 This is a simple **port scanner** that is able to map a large range of protocols. Using good design patterns for concurrency, like **fan-in/fan-out**, fixtures, goldenfiles and test helpers for tests, we create nice unit tests and acquire good performance in scanning process. All pakcages are covered by **TDD**, even when using tcp protocol for tests.
 
+* **Install**
+```
+$ go install github.com/jcbritobr/portscanner@latest
+```
 * **Build**
 ```sh
 $ go build -v
@@ -13,7 +17,7 @@ If tests failure happens in diffrent machines(because of port setup), just updat
 ```sh
 $ go test ./... -cover -update
 ```
-then test port-scanner again
+then test portscanner again
 
 ```sh
 $ go test ./... -cover
