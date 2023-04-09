@@ -51,7 +51,6 @@ $ ./portscanner -host localhost -t 100 -end 10000 | grep open
 ```sh
 $ ./portscanner -host www.google.com -t 100 -end 80
 Generating report
-................................................................................
 
 Port     Protocol    Status
 
