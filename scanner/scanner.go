@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	stClose = "closed"
-	stOpen  = "open"
+	StClose = "closed"
+	StOpen  = "open"
 	//PtTCP is a ptrotocol used by scannner object and may be exported
 	PtTCP                    = "tcp"
 	ptFTP                    = "ftp"
@@ -180,9 +180,9 @@ func (s *Scanner) scanPort(buffer <-chan Data) <-chan Data {
 			host := fmt.Sprintf("%s:%d", s.ip, dataItem.Port)
 			conn, err := s.openConn(host)
 			if err != nil {
-				dataItem.Status = stClose
+				dataItem.Status = StClose
 			} else {
-				dataItem.Status = stOpen
+				dataItem.Status = StOpen
 				dataItem.Protocol = s.predictPort(dataItem.Port)
 				conn.Close()
 			}

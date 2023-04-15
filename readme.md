@@ -40,22 +40,12 @@ Usage of ./portscanner:
 ```
 
 ```sh
-$ ./portscanner -host localhost -t 100 -end 10000 | grep open
-135      <unknown>   open
-445      samba       open
-5040     <unknown>   open
-5432     <unknown>   open
-7680     <unknown>   open
-```
-
-```sh
-$ ./portscanner -host www.google.com -t 100 -end 80
+$ ./portscanner -start 1 -end 2000 -workers 5 -host www.google.com
 Generating report
+processed: 100%
 
-Port     Protocol    Status
+Port      Protocol  Status    
 
-1                    closed
-2                    closed
-...
-80       http        open
+80        http      open      
+443       https     open      
 ```

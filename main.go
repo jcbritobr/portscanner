@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+
 	"github.com/jcbritobr/portscanner/scanner"
 )
 
@@ -25,7 +26,9 @@ func main() {
 	fmt.Println("Generating report")
 
 	for data := range c {
-		buffer = append(buffer, data)
+		if data.Status == scanner.StOpen {
+			buffer = append(buffer, data)
+		}
 		value := (float32(counter) / float32(total)) * 100
 
 		fmt.Printf("processed: %d%%\r", int(value))
@@ -38,6 +41,6 @@ func main() {
 
 	fmt.Printf("%-10s%-10s%-10s\n\n", "Port", "Protocol", "Status")
 	for _, data := range buffer {
-		fmt.Printf(fmt.Sprintf("%-10d%-10s%-10s\n", data.Port, data.Protocol, data.Status))
+		fmt.Printf("%-10d%-10s%-10s\n", data.Port, data.Protocol, data.Status)
 	}
 }
