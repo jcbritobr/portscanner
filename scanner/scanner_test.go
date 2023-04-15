@@ -45,8 +45,8 @@ func openGoldenFileHelper(t *testing.T, filename, source string, update bool) st
 	t.Helper()
 	path := filepath.Join(fsFixtureFolder, filename)
 	file, err := os.OpenFile(path, os.O_RDWR, 0644)
-	defer file.Close()
 	checkErrorFatalf(t, fmt.Sprintf("cant open golden file %s", path), err)
+	defer file.Close()
 	if update {
 		err = os.Truncate(path, 0)
 		checkErrorFatalf(t, fmt.Sprintf("cant truncate file %s", path), err)
@@ -65,8 +65,8 @@ func openDataFixtureHelper(t *testing.T, filename string) []Data {
 	t.Helper()
 	path := filepath.Join(fsFixtureFolder, filename)
 	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
-	defer file.Close()
 	checkErrorFatalf(t, fmt.Sprintf("cant open fixture %s", path), err)
+	defer file.Close()
 
 	content, err := ioutil.ReadAll(file)
 	checkErrorFatalf(t, fmt.Sprintf("cant read file %s", path), err)
@@ -86,12 +86,11 @@ func TestMain(m *testing.M) {
 
 func TestNewScanner(t *testing.T) {
 	type args struct {
-		start    int
-		end      int
-		workers  int
-		ip       string
-		protocol string
-		timeout  uint16
+		start   int
+		end     int
+		workers int
+		ip      string
+		timeout uint16
 	}
 	tests := []struct {
 		name string

@@ -93,7 +93,6 @@ type Data struct {
 
 // Scanner implements a concurrent port scanner
 type Scanner struct {
-	data    []Data
 	ip      string
 	workers int
 	start   int
