@@ -116,6 +116,8 @@ func NewScanner(start, end, workers int, ip string, timeout uint16) *Scanner {
 	return &Scanner{start: start, end: end, workers: workers, ip: ip, timeout: timeout}
 }
 
+// openConn will open a tcp connection with host and may return an error
+// or a tcp connection
 func (s *Scanner) openConn(host string) (net.Conn, error) {
 	addr, err := net.ResolveTCPAddr(PtTCP, host)
 	if err != nil {
@@ -144,6 +146,8 @@ func (s *Scanner) Process() <-chan Data {
 	return c
 }
 
+// predictPort gets an int as parameter and return its respective
+// port representation
 func (s *Scanner) predictPort(port int) string {
 	if rv, ok := knownPorts[port]; ok {
 		return rv
@@ -151,6 +155,8 @@ func (s *Scanner) predictPort(port int) string {
 	return typeUnknown
 }
 
+// generate will build Data type objects and return a Data type buffered
+// channel with Port field filled from the range of start field to end field
 func (s *Scanner) generate() <-chan Data {
 	c := make(chan Data, s.workers)
 	go func() {
@@ -163,6 +169,11 @@ func (s *Scanner) generate() <-chan Data {
 	return c
 }
 
+// scanPort will try to open a tcp port and return a buffered channel with port status filled.
+//
+// buffer is a Data type buffered channel with ip and port filled.
+//
+// This function returns a Data type buffered channel with Status field filled.
 func (s *Scanner) scanPort(buffer <-chan Data) <-chan Data {
 	c := make(chan Data, s.workers)
 	go func() {
@@ -184,6 +195,11 @@ func (s *Scanner) scanPort(buffer <-chan Data) <-chan Data {
 	return c
 }
 
+// merge will merge all channels in one.
+//
+// buffer is a Data slice or a sequence of Data separated by commas.
+//
+// It returns a Data channel with all input channels merged.
 func (s *Scanner) merge(buffer ...<-chan Data) <-chan Data {
 	var wg sync.WaitGroup
 	out := make(chan Data, s.workers)
